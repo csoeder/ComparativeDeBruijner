@@ -1,9 +1,14 @@
 # shamelessly ripped off of Pall Melsted
-# https://pmelsted.wordpress.com/2013/11/23/naive-python-implementation-of-a-de-bruijn-graph/
-
+# 	https://pmelsted.wordpress.com/2013/11/23/naive-python-implementation-of-a-de-bruijn-graph/
+# visualization ref:
+# 	https://plot.ly/ipython-notebooks/network-graphs/
 import collections
 import sys
 from Bio import Seq, SeqIO, SeqRecord
+import matplotlib.pyplot as plt
+sys.path.append('/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/')
+import networkx as nx
+
 
 # functions to deal with k-mers
 
@@ -51,6 +56,53 @@ def build(fn, k=31, limit=0, format='q'):
 	for x in d1:
 		del d[x]
 	return d
+
+
+def graph_scraper(seq, k=11):
+	murrs = collections.defaultdict(int)
+	transitions = collections.defaultdict(int)
+	seq_split = seq.split('N')
+	for subseq in seq_split:
+		jenny = kmers(subseq, k)
+
+		new_kmer = jenny.next()
+		murrs[new_kmer] += 1
+		old_kmer = new_kmer
+
+		for new_kmer in jenny:
+			murrs[new_kmer] += 1
+			transitions[(old_kmer, new_kmer)] += 1
+			old_kmer = new_kmer
+
+		jenny = kmers(twin(subseq), k)
+
+		new_kmer = jenny.next()
+		murrs[new_kmer] += 1
+		old_kmer = new_kmer
+
+		for new_kmer in jenny:
+			murrs[new_kmer] += 1
+			transitions[(old_kmer, new_kmer)] += 1
+			old_kmer = new_kmer
+	return murrs, transitions
+
+
+nodes, edges = graph_scraper("ATGCCGTA", k=4)
+G = nx.Graph()
+for node in nodes:
+	G.add_node(node)
+for edge in edges:
+	G.add_edge(edge[0], edge[1])
+
+nx.draw(G)
+plt.show()
+
+
+
+
+
+
+
 
 
 
